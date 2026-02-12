@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>معرض الصور + إشعارات</title>
+  <style>
+    img { width:200px; margin:10px; }
+  </style>
+</head>
+<body style="text-align:center;font-family:Arial">
+<h2>معرض الصور</h2>
+
+<div>
+  <img src="https://picsum.photos/200?random=1">
+  <img src="https://picsum.photos/200?random=2">
+  <img src="https://picsum.photos/200?random=3">
+</div>
+
+<button id="subscribe">اشترك لتلقي الإشعارات</button>
+
+<script>
+const publicVapidKey = "YOUR_PUBLIC_VAPID_KEY";
+
+// سجل Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+  .then(reg => console.log('SW registered', reg));
+}
+
+document.getElementById('subscribe').addEventListener('click', async () => {
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+  });
+
+  await fetch('/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscription: sub })
+  });
+
+  alert("تم الاشتراك بالإشعارات!");
+});
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+</script>
+</body>
+</html>
